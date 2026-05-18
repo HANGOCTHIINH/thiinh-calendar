@@ -3,7 +3,8 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recha
 import type { Task, DailyData, Mood } from '../types';
 import { Smile, Meh, Frown, Heart, ThumbsDown } from 'lucide-react';
 import clsx from 'clsx';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 interface AnalyticsProps {
   tasks: Task[];
@@ -45,9 +46,22 @@ export function Analytics({ tasks, dailyData, onMoodChange }: AnalyticsProps) {
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const todayData = dailyData.find(d => d.date === todayStr);
 
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = subDays(new Date(), 6 - i);
+    const dateStr = format(d, 'yyyy-MM-dd');
+    const dataObj = dailyData.find(x => x.date === dateStr);
+    return {
+      date: d,
+      dateStr,
+      mood: dataObj?.mood,
+      dayName: format(d, 'EEEE', { locale: vi })
+    };
+  });
+
   return (
-    <div className="flex flex-col md:flex-row gap-8 mt-12 bg-bg-card/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl">
-      <div className="flex-1 border-b md:border-b-0 md:border-r border-slate-200 pb-6 md:pb-0 md:pr-6 flex flex-col justify-center">
+    <div className="flex flex-col gap-8 mt-12 bg-bg-card/80 backdrop-blur-md p-6 rounded-2xl border border-slate-200 shadow-2xl">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="flex-1 border-b md:border-b-0 md:border-r border-slate-200 pb-6 md:pb-0 md:pr-6 flex flex-col justify-center">
         <h3 className="text-xl font-semibold mb-6 text-center text-text-main">Cảm xúc hôm nay</h3>
         <div className="flex justify-center gap-4">
           {moods.map((m) => (
@@ -103,6 +117,34 @@ export function Analytics({ tasks, dailyData, onMoodChange }: AnalyticsProps) {
             Chưa có dữ liệu thời gian để thống kê
           </div>
         )}
+      </div>
+      </div>
+
+      {/* Weekly Mood Analysis */}
+      <div className="border-t border-slate-200 pt-6">
+        <h3 className="text-xl font-semibold mb-6 text-center text-text-main">Phân tích cảm xúc 7 ngày qua</h3>
+        <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+          {last7Days.map(day => {
+            const moodInfo = moods.find(m => m.type === day.mood);
+            return (
+              <div key={day.dateStr} className="bg-slate-50 rounded-xl p-4 flex flex-col items-center gap-2 border border-slate-100">
+                <span className="text-xs text-slate-500 font-medium capitalize">{day.dayName}</span>
+                <span className="text-sm font-bold text-slate-700">{format(day.date, 'dd/MM')}</span>
+                <div className="h-12 flex items-center justify-center">
+                  {moodInfo ? (
+                    <div className={clsx("transition-transform hover:scale-110 cursor-help", moodInfo.color)} title={moodInfo.type}>
+                      {moodInfo.icon}
+                    </div>
+                  ) : (
+                    <div className="text-slate-300" title="Chưa ghi nhận">
+                      <Meh className="w-8 h-8 opacity-50" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
