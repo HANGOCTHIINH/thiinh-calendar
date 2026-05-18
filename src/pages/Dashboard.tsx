@@ -105,11 +105,11 @@ export default function Dashboard() {
 
         {/* Sync Info / Navigation Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-bg-card/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200">
-          <div className="flex items-center gap-2 bg-bg-base p-1 rounded-xl border border-slate-200">
+          <div className="flex gap-2 bg-bg-base p-1 rounded-xl border border-slate-200 w-full md:w-auto overflow-x-auto hide-scrollbar snap-x">
             <button 
               onClick={() => setView('week')}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
                 view === 'week' ? "bg-purple-500 text-slate-800 shadow-lg" : "text-text-muted hover:text-slate-800"
               )}
             >
@@ -118,7 +118,7 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('month')}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
                 view === 'month' ? "bg-blue-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
               )}
             >
@@ -127,7 +127,7 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('year')}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
                 view === 'year' ? "bg-pink-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
               )}
             >
@@ -136,7 +136,7 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('timesheet')}
               className={clsx(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
                 view === 'timesheet' ? "bg-indigo-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
               )}
             >
@@ -145,26 +145,26 @@ export default function Dashboard() {
           </div>
 
           {view === 'week' && (
-            <div className="flex items-center gap-4">
-              <button onClick={() => setCurrentDate(subWeeks(currentDate, 1))} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-text-muted hover:text-slate-800">
+            <div className="flex items-center justify-between w-full md:w-auto gap-4">
+              <button onClick={() => setCurrentDate(subWeeks(currentDate, 1))} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-text-muted hover:text-slate-800 shrink-0">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button onClick={() => setCurrentDate(new Date())} className="font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[#a855f7] cursor-pointer hover:opacity-80">
+              <button onClick={() => setCurrentDate(new Date())} className="font-semibold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[#a855f7] cursor-pointer hover:opacity-80 whitespace-nowrap text-center">
                 Tuần này
               </button>
-              <button onClick={() => setCurrentDate(addWeeks(currentDate, 1))} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-text-muted hover:text-slate-800">
+              <button onClick={() => setCurrentDate(addWeeks(currentDate, 1))} className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer text-text-muted hover:text-slate-800 shrink-0">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center justify-between w-full md:w-auto gap-2 text-sm mt-2 md:mt-0">
             <span className="text-blue-500 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"/> Đã đồng bộ</span>
             <button 
               onClick={async () => {
                 await supabase.auth.signOut();
               }}
-              className="flex items-center gap-2 text-slate-500 hover:text-red-500 cursor-pointer px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors ml-4"
+              className="flex items-center gap-2 text-slate-500 hover:text-red-500 cursor-pointer px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 hover:bg-red-50 transition-colors ml-auto md:ml-4 shrink-0"
             >
               <LogOut className="w-4 h-4" /> Đăng xuất
             </button>

@@ -31,10 +31,22 @@ export function useData() {
       if (savedTS) setTimesheetRecords(JSON.parse(savedTS));
 
       if (user) {
-        const { data: tData } = await supabase.from('tasks').select('*').eq('user_id', user.id);
-        const { data: dData } = await supabase.from('daily_data').select('*').eq('user_id', user.id);
+        const [
+          { data: tData },
+          { data: dData },
+          { data: sData },
+          { data: tsData }
+        ] = await Promise.all([
+          supabase.from('tasks').select('*').eq('user_id', user.id),
+          supabase.from('daily_data').select('*').eq('user_id', user.id),
+          supabase.from('special_days').select('*').eq('user_id', user.id),
+          supabase.from('timesheet_records').select('*').eq('user_id', user.id)
+        ]);
+        
         if (tData) setTasks(tData);
         if (dData) setDailyData(dData);
+        if (sData) setUserSpecialDays(sData);
+        if (tsData) setTimesheetRecords(tsData);
       } else {
         const savedT = localStorage.getItem('thiinh-tasks');
         const savedD = localStorage.getItem('thiinh-daily-data');
@@ -49,21 +61,53 @@ export function useData() {
   const updateTasks = async (newTasks: Task[]) => {
     setTasks(newTasks);
     localStorage.setItem('thiinh-tasks', JSON.stringify(newTasks));
+    if (user) {
+      if (newTasks.length > 0) {
+        await supabase.from('tasks').upsert(newTasks.map(t => ({ ...t, user_id: user.id })));
+        await supabase.from('tasks').delete().eq('user_id', user.id).not('id', 'in', `(${newTasks.map(t => t.id).join(',')})`);
+      } else {
+        await supabase.from('tasks').delete().eq('user_id', user.id);
+      }
+    }
   };
 
   const updateDailyData = async (newData: DailyData[]) => {
     setDailyData(newData);
     localStorage.setItem('thiinh-daily-data', JSON.stringify(newData));
+    if (user) {
+      if (newData.length > 0) {
+        await supabase.from('daily_data').upsert(newData.map(d => ({ ...d, user_id: user.id })));
+        await supabase.from('daily_data').delete().eq('user_id', user.id).not('date', 'in', `(${newData.map(d => d.date).join(',')})`);
+      } else {
+        await supabase.from('daily_data').delete().eq('user_id', user.id);
+      }
+    }
   };
 
   const updateSpecialDays = async (newSpecialDays: SpecialDay[]) => {
     setUserSpecialDays(newSpecialDays);
     localStorage.setItem('thiinh-special-days', JSON.stringify(newSpecialDays));
+    if (user) {
+      if (newSpecialDays.length > 0) {
+        await supabase.from('special_days').upsert(newSpecialDays.map(sd => ({ ...sd, user_id: user.id })));
+        await supabase.from('special_days').delete().eq('user_id', user.id).not('id', 'in', `(${newSpecialDays.map(sd => sd.id).join(',')})`);
+      } else {
+        await supabase.from('special_days').delete().eq('user_id', user.id);
+      }
+    }
   };
 
   const updateTimesheetRecords = async (newRecords: TimesheetRecord[]) => {
     setTimesheetRecords(newRecords);
     localStorage.setItem('thiinh-timesheet', JSON.stringify(newRecords));
+    if (user) {
+      if (newRecords.length > 0) {
+        await supabase.from('timesheet_records').upsert(newRecords.map(r => ({ ...r, user_id: user.id })));
+        await supabase.from('timesheet_records').delete().eq('user_id', user.id).not('id', 'in', `(${newRecords.map(r => r.id).join(',')})`);
+      } else {
+        await supabase.from('timesheet_records').delete().eq('user_id', user.id);
+      }
+    }
   };
 
   const allSpecialDays = useMemo(() => {

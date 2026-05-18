@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 import type { TimesheetRecord, ShiftType } from '../types';
 import { Calculator, Clock, Download, Plus, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -25,7 +25,8 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
   const [bonus, setBonus] = useState<number | ''>('');
   const [penalty, setPenalty] = useState<number | ''>('');
 
-  const [filterMonth, setFilterMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [filterStartDate, setFilterStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [filterEndDate, setFilterEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,13 +46,13 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
   };
 
   const filteredRecords = useMemo(() => {
-    const monthStart = startOfMonth(parseISO(`${filterMonth}-01`));
-    const monthEnd = endOfMonth(monthStart);
+    const start = startOfDay(parseISO(filterStartDate));
+    const end = endOfDay(parseISO(filterEndDate));
     
     return records
-      .filter(r => isWithinInterval(parseISO(r.date), { start: monthStart, end: monthEnd }))
+      .filter(r => isWithinInterval(parseISO(r.date), { start, end }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [records, filterMonth]);
+  }, [records, filterStartDate, filterEndDate]);
 
   const summary = useMemo(() => {
     let totalShifts = 0;
@@ -89,7 +90,7 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `cham-cong-${filterMonth}.csv`);
+    link.setAttribute('download', `cham-cong-${filterStartDate}-den-${filterEndDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -192,12 +193,22 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
               <Calculator className="w-5 h-5 text-indigo-500" /> Tổng kết lương
             </h3>
             <div className="flex gap-2 w-full sm:w-auto">
-              <input 
-                type="month" 
-                value={filterMonth}
-                onChange={(e) => setFilterMonth(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm"
-              />
+              <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200">
+                <span className="text-xs text-slate-500">Từ</span>
+                <input 
+                  type="date" 
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="bg-transparent text-sm focus:outline-none"
+                />
+                <span className="text-xs text-slate-500 border-l pl-2 border-slate-200">Đến</span>
+                <input 
+                  type="date" 
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="bg-transparent text-sm focus:outline-none"
+                />
+              </div>
               <button 
                 onClick={handleExport}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors cursor-pointer"
@@ -238,7 +249,7 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
           </div>
           {filteredRecords.length === 0 ? (
             <div className="p-8 text-center text-text-muted">
-              Không có dữ liệu chấm công trong tháng này.
+              Không có dữ liệu chấm công trong khoảng thời gian này.
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
