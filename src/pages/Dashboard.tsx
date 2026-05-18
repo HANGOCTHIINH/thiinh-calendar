@@ -2,22 +2,30 @@ import { useState, useMemo } from 'react';
 import { Header } from '../components/Header';
 import { WeeklyGrid } from '../components/WeeklyGrid';
 import { MonthlyGrid } from '../components/MonthlyGrid';
+import { YearView } from '../components/YearView';
+import { TimesheetView } from '../components/TimesheetView';
 import { TaskModal } from '../components/TaskModal';
 import { Analytics } from '../components/Analytics';
 import { useData } from '../hooks/useData';
 
 import type { Task, Category, Mood } from '../types';
-import { LogOut, Search, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Search, CalendarDays, CalendarRange, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { addWeeks, subWeeks } from 'date-fns';
 import { supabase } from '../lib/supabase';
-
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 export default function Dashboard() {
-  const { tasks, setTasks, dailyData, setDailyData, isLoaded } = useData();
+  const { 
+    tasks, setTasks, 
+    dailyData, setDailyData, 
+    specialDays, userSpecialDays, setSpecialDays,
+    timesheetRecords, setTimesheetRecords,
+    isLoaded 
+  } = useData();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
-  const [view, setView] = useState<'week' | 'month'>('week');
+  const [view, setView] = useState<'week' | 'month' | 'year' | 'timesheet'>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,8 +94,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans p-4 md:p-8 selection:bg-purple-500/30">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-bg-base text-text-main font-sans p-4 md:p-8 selection:bg-purple-200">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="max-w-7xl mx-auto space-y-6"
+      >
         <Header />
 
         {/* Sync Info / Navigation Bar */}
@@ -106,10 +119,28 @@ export default function Dashboard() {
               onClick={() => setView('month')}
               className={clsx(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
-                view === 'month' ? "bg-blue-500 text-slate-800 shadow-lg" : "text-text-muted hover:text-slate-800"
+                view === 'month' ? "bg-blue-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
               )}
             >
               <CalendarRange className="w-4 h-4" /> Lịch Tháng
+            </button>
+            <button 
+              onClick={() => setView('year')}
+              className={clsx(
+                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                view === 'year' ? "bg-pink-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
+              )}
+            >
+              <Calendar className="w-4 h-4" /> Lịch Năm
+            </button>
+            <button 
+              onClick={() => setView('timesheet')}
+              className={clsx(
+                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer",
+                view === 'timesheet' ? "bg-indigo-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
+              )}
+            >
+              <Clock className="w-4 h-4" /> Chấm công
             </button>
           </div>
 
@@ -154,26 +185,28 @@ export default function Dashboard() {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
             {['Tất cả', 'Học tập', 'Dự án', 'Cá nhân'].map(cat => (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 key={cat}
                 onClick={() => setFilterCategory(cat as any)}
                 className={clsx(
                   "px-6 py-3.5 rounded-xl border whitespace-nowrap transition-all font-medium cursor-pointer",
                   filterCategory === cat 
-                    ? cat === 'Học tập' ? 'bg-purple-500/30 border-purple-500 text-purple-700 shadow-[0_0_15px_rgba(168,85,247,0.3)]'
-                      : cat === 'Dự án' ? 'bg-blue-500/30 border-blue-500 text-blue-700 shadow-[0_0_15px_rgba(6,182,212,0.3)]'
-                      : cat === 'Cá nhân' ? 'bg-pink-500/30 border-pink-500 text-pink-700 shadow-[0_0_15px_rgba(236,72,153,0.3)]'
-                      : 'bg-slate-100 border-white text-slate-800'
-                    : 'bg-bg-card/80 border-slate-200 text-text-muted hover:border-[#a4a1b5] hover:bg-slate-50 backdrop-blur-md'
+                    ? cat === 'Học tập' ? 'bg-purple-100 border-purple-300 text-purple-700 shadow-md'
+                      : cat === 'Dự án' ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-md'
+                      : cat === 'Cá nhân' ? 'bg-pink-100 border-pink-300 text-pink-700 shadow-md'
+                      : 'bg-white border-slate-300 text-slate-800 shadow-md'
+                    : 'bg-bg-card/80 border-slate-200 text-text-muted hover:border-slate-300 hover:bg-slate-50 backdrop-blur-md'
                 )}
               >
                 {cat}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
 
-        {view === 'week' ? (
+        {view === 'week' && (
           <WeeklyGrid 
             tasks={filteredTasks}
             dailyData={dailyData}
@@ -183,7 +216,8 @@ export default function Dashboard() {
             onToggleComplete={handleToggleComplete}
             onEnergyChange={handleEnergyChange}
           />
-        ) : (
+        )}
+        {view === 'month' && (
           <MonthlyGrid 
             currentDate={currentDate}
             onDateChange={setCurrentDate}
@@ -195,6 +229,26 @@ export default function Dashboard() {
             }}
           />
         )}
+        {view === 'year' && (
+          <YearView
+            currentDate={currentDate}
+            specialDays={specialDays}
+            userSpecialDays={userSpecialDays}
+            onAddSpecialDay={(day) => setSpecialDays([...userSpecialDays, day])}
+            onRemoveSpecialDay={(id) => setSpecialDays(userSpecialDays.filter(d => d.id !== id))}
+            onDateClick={(date) => {
+              setCurrentDate(date);
+              setView('week');
+            }}
+          />
+        )}
+        {view === 'timesheet' && (
+          <TimesheetView
+            records={timesheetRecords}
+            onAddRecord={(rec) => setTimesheetRecords([...timesheetRecords, rec])}
+            onRemoveRecord={(id) => setTimesheetRecords(timesheetRecords.filter(r => r.id !== id))}
+          />
+        )}
 
         <Analytics 
           tasks={tasks}
@@ -202,13 +256,17 @@ export default function Dashboard() {
           onMoodChange={handleMoodChange}
         />
 
-        <TaskModal 
-          task={selectedTask}
-          onClose={() => setSelectedTask(null)}
-          onSave={handleSaveTask}
-          onDelete={handleDeleteTask}
-        />
-      </div>
+        <AnimatePresence>
+          {selectedTask && (
+            <TaskModal 
+              task={selectedTask}
+              onClose={() => setSelectedTask(null)}
+              onSave={handleSaveTask}
+              onDelete={handleDeleteTask}
+            />
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

@@ -24,3 +24,21 @@ export type DailyData = {
   energyLevel: number; // 0 - 100
   mood?: Mood;
 };
+
+export type SpecialDay = {
+  id: string;
+  name: string;
+  date: string; // MM-DD format
+  type: 'birthday' | 'holiday' | 'custom';
+};
+
+export type ShiftType = 1 | 2 | 3;
+
+export type TimesheetRecord = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  shift: ShiftType;
+  overtimeHours: number;
+  bonus: number;
+  penalty: number;
+};

@@ -12,9 +12,9 @@ interface TaskCardProps {
 }
 
 const categoryColors = {
-  'Học tập': 'bg-purple-500/20 border-purple-500/50 text-purple-700',
-  'Dự án': 'bg-blue-500/20 border-blue-500/50 text-blue-700',
-  'Cá nhân': 'bg-pink-500/20 border-pink-500/50 text-pink-700',
+  'Học tập': 'bg-purple-50 border-purple-200 text-purple-800 hover:bg-purple-100',
+  'Dự án': 'bg-blue-50 border-blue-200 text-blue-800 hover:bg-blue-100',
+  'Cá nhân': 'bg-pink-50 border-pink-200 text-pink-800 hover:bg-pink-100',
 };
 
 const indicatorColors = {
