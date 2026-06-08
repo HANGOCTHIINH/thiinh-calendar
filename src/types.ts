@@ -20,6 +20,7 @@ export type Task = {
 export type Mood = 'Tuyệt vời' | 'Tốt' | 'Bình thường' | 'Tệ' | 'Rất tệ';
 
 export type DailyData = {
+  id?: string;
   date: string;
   energyLevel: number; // 0 - 100
   mood?: Mood;

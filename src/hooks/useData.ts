@@ -63,8 +63,12 @@ export function useData() {
     localStorage.setItem('thiinh-tasks', JSON.stringify(newTasks));
     if (user) {
       if (newTasks.length > 0) {
-        await supabase.from('tasks').upsert(newTasks.map(t => ({ ...t, user_id: user.id })));
-        await supabase.from('tasks').delete().eq('user_id', user.id).not('id', 'in', `(${newTasks.map(t => t.id).join(',')})`);
+        const { error: upsertError } = await supabase.from('tasks').upsert(newTasks.map(t => ({ ...t, user_id: user.id })));
+        if (upsertError) console.error("Error upserting tasks:", upsertError);
+        
+        const ids = newTasks.map(t => t.id);
+        const { error: deleteError } = await supabase.from('tasks').delete().eq('user_id', user.id).not('id', 'in', ids);
+        if (deleteError) console.error("Error deleting tasks:", deleteError);
       } else {
         await supabase.from('tasks').delete().eq('user_id', user.id);
       }
@@ -76,8 +80,17 @@ export function useData() {
     localStorage.setItem('thiinh-daily-data', JSON.stringify(newData));
     if (user) {
       if (newData.length > 0) {
-        await supabase.from('daily_data').upsert(newData.map(d => ({ ...d, user_id: user.id })));
-        await supabase.from('daily_data').delete().eq('user_id', user.id).not('date', 'in', `(${newData.map(d => d.date).join(',')})`);
+        // We ensure we upsert properly by date and user_id.
+        // Make sure the table has a unique constraint on (user_id, date)
+        const { error: upsertError } = await supabase.from('daily_data').upsert(
+          newData.map(d => ({ ...d, user_id: user.id })),
+          { onConflict: 'user_id,date' }
+        );
+        if (upsertError) console.error("Error upserting daily_data:", upsertError);
+
+        const dates = newData.map(d => d.date);
+        const { error: deleteError } = await supabase.from('daily_data').delete().eq('user_id', user.id).not('date', 'in', dates);
+        if (deleteError) console.error("Error deleting daily_data:", deleteError);
       } else {
         await supabase.from('daily_data').delete().eq('user_id', user.id);
       }
@@ -89,8 +102,12 @@ export function useData() {
     localStorage.setItem('thiinh-special-days', JSON.stringify(newSpecialDays));
     if (user) {
       if (newSpecialDays.length > 0) {
-        await supabase.from('special_days').upsert(newSpecialDays.map(sd => ({ ...sd, user_id: user.id })));
-        await supabase.from('special_days').delete().eq('user_id', user.id).not('id', 'in', `(${newSpecialDays.map(sd => sd.id).join(',')})`);
+        const { error: upsertError } = await supabase.from('special_days').upsert(newSpecialDays.map(sd => ({ ...sd, user_id: user.id })));
+        if (upsertError) console.error("Error upserting special_days:", upsertError);
+
+        const ids = newSpecialDays.map(sd => sd.id);
+        const { error: deleteError } = await supabase.from('special_days').delete().eq('user_id', user.id).not('id', 'in', ids);
+        if (deleteError) console.error("Error deleting special_days:", deleteError);
       } else {
         await supabase.from('special_days').delete().eq('user_id', user.id);
       }
@@ -102,8 +119,12 @@ export function useData() {
     localStorage.setItem('thiinh-timesheet', JSON.stringify(newRecords));
     if (user) {
       if (newRecords.length > 0) {
-        await supabase.from('timesheet_records').upsert(newRecords.map(r => ({ ...r, user_id: user.id })));
-        await supabase.from('timesheet_records').delete().eq('user_id', user.id).not('id', 'in', `(${newRecords.map(r => r.id).join(',')})`);
+        const { error: upsertError } = await supabase.from('timesheet_records').upsert(newRecords.map(r => ({ ...r, user_id: user.id })));
+        if (upsertError) console.error("Error upserting timesheet_records:", upsertError);
+
+        const ids = newRecords.map(r => r.id);
+        const { error: deleteError } = await supabase.from('timesheet_records').delete().eq('user_id', user.id).not('id', 'in', ids);
+        if (deleteError) console.error("Error deleting timesheet_records:", deleteError);
       } else {
         await supabase.from('timesheet_records').delete().eq('user_id', user.id);
       }
