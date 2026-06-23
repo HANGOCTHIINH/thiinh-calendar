@@ -94,7 +94,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-main font-sans p-4 md:p-8 selection:bg-purple-200">
+    <div className="min-h-screen bg-transparent text-text-main font-sans p-4 md:p-8 selection:bg-purple-200">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,7 +104,7 @@ export default function Dashboard() {
         <Header />
 
         {/* Sync Info / Navigation Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-bg-card/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/70 backdrop-blur-xl p-4 rounded-3xl border border-white/50 shadow-xl">
           <div className="flex gap-2 bg-bg-base p-1 rounded-xl border border-slate-200 w-full md:w-auto overflow-x-auto hide-scrollbar snap-x">
             <button 
               onClick={() => setView('week')}

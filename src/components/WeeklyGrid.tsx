@@ -66,13 +66,13 @@ export function WeeklyGrid({ tasks, dailyData, onTaskClick, onAddTask, onToggleC
             variants={item}
             whileHover={{ y: -5 }}
             className={clsx(
-              "bg-bg-card/90 backdrop-blur-xl rounded-3xl border flex flex-col overflow-hidden min-h-[500px] transition-shadow shadow-sm",
-              isToday ? "border-purple-500 shadow-[0_10px_30px_rgba(168,85,247,0.2)]" : "border-slate-200 hover:shadow-lg"
+              "bg-white/60 backdrop-blur-2xl rounded-3xl border flex flex-col overflow-hidden min-h-[500px] transition-all duration-300",
+              isToday ? "border-purple-300 shadow-[0_8px_32px_rgba(168,85,247,0.2)] bg-white/80" : "border-white/50 shadow-lg hover:shadow-xl hover:bg-white/70"
             )}
           >
             <div className={clsx(
-              "p-4 text-center border-b transition-colors duration-500",
-              isToday ? "bg-gradient-to-br from-purple-100 to-pink-50 border-purple-200" : "bg-slate-50 border-slate-200"
+              "p-4 text-center border-b border-white/40 transition-colors duration-500",
+              isToday ? "bg-gradient-to-br from-purple-100/50 to-pink-50/50" : "bg-white/30"
             )}>
               <div className="text-xs uppercase font-bold text-text-muted tracking-widest mb-1">
                 {format(day, 'EEEE', { locale: vi })}
@@ -110,7 +110,7 @@ export function WeeklyGrid({ tasks, dailyData, onTaskClick, onAddTask, onToggleC
               </div>
             </div>
 
-            <div className="flex-1 p-3 space-y-4 overflow-y-auto custom-scrollbar bg-slate-50/50">
+            <div className="flex-1 p-3 space-y-4 overflow-y-auto custom-scrollbar bg-white/20">
               
               {/* Sáng */}
               <div className="space-y-2">
@@ -147,7 +147,7 @@ export function WeeklyGrid({ tasks, dailyData, onTaskClick, onAddTask, onToggleC
 
             </div>
 
-            <div className="p-3 border-t border-slate-200 bg-white">
+            <div className="p-3 border-t border-white/40 bg-white/40">
               <motion.button 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

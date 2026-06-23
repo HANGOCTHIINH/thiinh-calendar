@@ -80,17 +80,18 @@ export function useData() {
     localStorage.setItem('thiinh-daily-data', JSON.stringify(newData));
     if (user) {
       if (newData.length > 0) {
-        // We ensure we upsert properly by date and user_id.
-        // Make sure the table has a unique constraint on (user_id, date)
-        const { error: upsertError } = await supabase.from('daily_data').upsert(
-          newData.map(d => ({ ...d, user_id: user.id })),
-          { onConflict: 'user_id,date' }
-        );
-        if (upsertError) console.error("Error upserting daily_data:", upsertError);
+        // Delete all daily_data for this user to prevent duplicates without relying on unique constraints
+        const { error: deleteError } = await supabase.from('daily_data').delete().eq('user_id', user.id);
+        if (deleteError) console.error("Error deleting old daily_data:", deleteError);
 
-        const dates = newData.map(d => `"${d.date}"`).join(',');
-        const { error: deleteError } = await supabase.from('daily_data').delete().eq('user_id', user.id).not('date', 'in', `(${dates})`);
-        if (deleteError) console.error("Error deleting daily_data:", deleteError);
+        // Insert fresh data
+        const { error: insertError } = await supabase.from('daily_data').insert(
+          newData.map(d => {
+            const { id, ...rest } = d;
+            return { ...rest, user_id: user.id };
+          })
+        );
+        if (insertError) console.error("Error inserting daily_data:", insertError);
       } else {
         await supabase.from('daily_data').delete().eq('user_id', user.id);
       }
