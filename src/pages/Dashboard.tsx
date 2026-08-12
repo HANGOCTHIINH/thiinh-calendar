@@ -9,8 +9,8 @@ import { Analytics } from '../components/Analytics';
 import { useData } from '../hooks/useData';
 
 import type { Task, Category, Mood } from '../types';
-import { LogOut, Search, CalendarDays, CalendarRange, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { addWeeks, subWeeks } from 'date-fns';
+import { LogOut, Search, CalendarDays, CalendarRange, Calendar, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { addWeeks, subWeeks, format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -94,7 +94,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-text-main font-sans p-4 md:p-8 selection:bg-purple-200">
+    <div className="min-h-screen bg-transparent text-text-main font-sans p-4 md:p-8 pb-24 md:pb-8 selection:bg-purple-200">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -105,12 +105,12 @@ export default function Dashboard() {
 
         {/* Sync Info / Navigation Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/70 backdrop-blur-xl p-4 rounded-3xl border border-white/50 shadow-xl">
-          <div className="flex gap-2 bg-bg-base p-1 rounded-xl border border-slate-200 w-full md:w-auto overflow-x-auto hide-scrollbar snap-x">
+          <div className="hidden md:flex gap-2 bg-bg-base p-1.5 rounded-2xl border border-slate-200/60 shadow-inner w-full md:w-auto overflow-x-auto hide-scrollbar snap-x">
             <button 
               onClick={() => setView('week')}
               className={clsx(
-                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
-                view === 'week' ? "bg-purple-500 text-slate-800 shadow-lg" : "text-text-muted hover:text-slate-800"
+                "flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap snap-start shrink-0 text-sm",
+                view === 'week' ? "bg-purple-500 text-white shadow-md shadow-purple-500/30" : "text-text-muted hover:text-slate-800 hover:bg-slate-100/50"
               )}
             >
               <CalendarDays className="w-4 h-4" /> Lịch Tuần
@@ -118,8 +118,8 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('month')}
               className={clsx(
-                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
-                view === 'month' ? "bg-blue-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
+                "flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap snap-start shrink-0 text-sm",
+                view === 'month' ? "bg-blue-500 text-white shadow-md shadow-blue-500/30" : "text-text-muted hover:text-slate-800 hover:bg-slate-100/50"
               )}
             >
               <CalendarRange className="w-4 h-4" /> Lịch Tháng
@@ -127,8 +127,8 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('year')}
               className={clsx(
-                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
-                view === 'year' ? "bg-pink-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
+                "flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap snap-start shrink-0 text-sm",
+                view === 'year' ? "bg-pink-500 text-white shadow-md shadow-pink-500/30" : "text-text-muted hover:text-slate-800 hover:bg-slate-100/50"
               )}
             >
               <Calendar className="w-4 h-4" /> Lịch Năm
@@ -136,8 +136,8 @@ export default function Dashboard() {
             <button 
               onClick={() => setView('timesheet')}
               className={clsx(
-                "flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-all cursor-pointer whitespace-nowrap snap-start shrink-0",
-                view === 'timesheet' ? "bg-indigo-500 text-white shadow-lg" : "text-text-muted hover:text-slate-800"
+                "flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all cursor-pointer whitespace-nowrap snap-start shrink-0 text-sm",
+                view === 'timesheet' ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30" : "text-text-muted hover:text-slate-800 hover:bg-slate-100/50"
               )}
             >
               <Clock className="w-4 h-4" /> Chấm công
@@ -267,6 +267,61 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Floating Action Button for Mobile Quick Task Addition */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => handleAddTask(format(currentDate, 'yyyy-MM-dd'))}
+        className="md:hidden fixed bottom-20 right-5 z-40 w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full shadow-2xl flex items-center justify-center border-2 border-white/60 cursor-pointer active:scale-95"
+        aria-label="Thêm công việc nhanh"
+      >
+        <Plus className="w-7 h-7" />
+      </motion.button>
+
+      {/* Sticky Mobile Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-2xl border-t border-slate-200/80 px-4 py-2 flex justify-around items-center shadow-[0_-10px_25px_rgba(0,0,0,0.08)]">
+        <button
+          onClick={() => setView('week')}
+          className={clsx(
+            "flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer min-w-[64px]",
+            view === 'week' ? "text-purple-600 font-bold scale-105" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <CalendarDays className="w-5 h-5" />
+          <span className="text-[11px]">Lịch Tuần</span>
+        </button>
+        <button
+          onClick={() => setView('month')}
+          className={clsx(
+            "flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer min-w-[64px]",
+            view === 'month' ? "text-blue-600 font-bold scale-105" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <CalendarRange className="w-5 h-5" />
+          <span className="text-[11px]">Lịch Tháng</span>
+        </button>
+        <button
+          onClick={() => setView('year')}
+          className={clsx(
+            "flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer min-w-[64px]",
+            view === 'year' ? "text-pink-600 font-bold scale-105" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <Calendar className="w-5 h-5" />
+          <span className="text-[11px]">Lịch Năm</span>
+        </button>
+        <button
+          onClick={() => setView('timesheet')}
+          className={clsx(
+            "flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all cursor-pointer min-w-[64px]",
+            view === 'timesheet' ? "text-indigo-600 font-bold scale-105" : "text-slate-500 hover:text-slate-800"
+          )}
+        >
+          <Clock className="w-5 h-5" />
+          <span className="text-[11px]">Chấm công</span>
+        </button>
+      </nav>
     </div>
   );
 }

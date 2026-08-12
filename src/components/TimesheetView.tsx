@@ -106,7 +106,7 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-fit"
+        className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 md:p-6 border border-white/60 shadow-lg h-fit"
       >
         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5 text-blue-500" /> Chấm công mới
@@ -192,28 +192,28 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
             <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
               <Calculator className="w-5 h-5 text-indigo-500" /> Tổng kết lương
             </h3>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <div className="flex items-center gap-2 bg-white px-2 py-1 rounded-lg border border-slate-200">
-                <span className="text-xs text-slate-500">Từ</span>
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200/80 text-xs sm:text-sm w-full sm:w-auto">
+                <span className="text-slate-500 font-medium">Từ</span>
                 <input 
                   type="date" 
                   value={filterStartDate}
                   onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-transparent text-sm focus:outline-none"
+                  className="bg-transparent focus:outline-none font-medium text-slate-700"
                 />
-                <span className="text-xs text-slate-500 border-l pl-2 border-slate-200">Đến</span>
+                <span className="text-slate-500 font-medium border-l pl-2 border-slate-200">Đến</span>
                 <input 
                   type="date" 
                   value={filterEndDate}
                   onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-transparent text-sm focus:outline-none"
+                  className="bg-transparent focus:outline-none font-medium text-slate-700"
                 />
               </div>
               <button 
                 onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer w-full sm:w-auto"
               >
-                <Download className="w-4 h-4" /> Xuất CSV
+                <Download className="w-4 h-4 text-blue-500" /> Xuất CSV
               </button>
             </div>
           </div>

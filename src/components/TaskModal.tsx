@@ -65,22 +65,22 @@ export function TaskModal({ task, onClose, onSave, onDelete }: TaskModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/40 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
         />
 
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="relative w-full max-w-4xl bg-bg-card border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[500px] z-10"
+          initial={{ y: 50, opacity: 0, scale: 0.98 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          exit={{ y: 50, opacity: 0, scale: 0.98 }}
+          className="relative w-full max-w-4xl bg-white/95 backdrop-blur-2xl border border-white/60 rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh] md:max-h-[85vh] z-10 overflow-y-auto"
         >
-          <div className="flex-1 p-6 border-r border-slate-200 bg-bg-base/80">
+          <div className="flex-1 p-5 md:p-6 border-b md:border-b-0 md:border-r border-slate-200/60 bg-white/40">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-text-main">Chỉnh sửa công việc</h2>
               <button onClick={onClose} className="text-text-muted hover:text-slate-800 md:hidden">
