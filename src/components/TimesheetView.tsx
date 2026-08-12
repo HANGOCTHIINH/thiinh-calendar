@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+import React, { useState, useMemo, useEffect } from 'react';
+import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay, endOfDay, subDays } from 'date-fns';
 import type { TimesheetRecord, ShiftType } from '../types';
-import { Calculator, Clock, Download, Plus, Trash2 } from 'lucide-react';
+import { Calculator, Clock, Download, Plus, Trash2, CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import clsx from 'clsx';
 
 const SHIFT_HOURS = {
   1: 4.5, // 8:00 - 12:30
@@ -25,8 +26,46 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
   const [bonus, setBonus] = useState<number | ''>('');
   const [penalty, setPenalty] = useState<number | ''>('');
 
+  // Mode: 'cycle' (Chốt theo ngày lấy lương) or 'custom' (Chọn khoảng ngày tùy chỉnh)
+  const [filterMode, setFilterMode] = useState<'cycle' | 'custom'>('cycle');
+  
+  // Payday cutoff day (Day of month: 1 - 31)
+  const [cutoffDay, setCutoffDay] = useState<number>(() => {
+    const saved = localStorage.getItem('thiinh-payday-cutoff');
+    return saved ? Number(saved) : 5; // Default 5th of month
+  });
+
+  // Cycle Offset (0 = Current cycle, -1 = Previous cycle, +1 = Next cycle)
+  const [cycleOffset, setCycleOffset] = useState<number>(0);
+
   const [filterStartDate, setFilterStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [filterEndDate, setFilterEndDate] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+
+  useEffect(() => {
+    localStorage.setItem('thiinh-payday-cutoff', cutoffDay.toString());
+  }, [cutoffDay]);
+
+  // Compute active pay cycle dates
+  const activeCycle = useMemo(() => {
+    const now = new Date();
+    let currentYear = now.getFullYear();
+    let currentMonth = now.getMonth(); // 0-indexed
+
+    if (now.getDate() < cutoffDay) {
+      currentMonth -= 1;
+    }
+
+    const targetStart = new Date(currentYear, currentMonth + cycleOffset, cutoffDay);
+    const targetEnd = subDays(new Date(currentYear, currentMonth + cycleOffset + 1, cutoffDay), 1);
+
+    return {
+      start: startOfDay(targetStart),
+      end: endOfDay(targetEnd),
+      startDateStr: format(targetStart, 'yyyy-MM-dd'),
+      endDateStr: format(targetEnd, 'yyyy-MM-dd'),
+      label: `Kỳ ${format(targetStart, 'dd/MM')} - ${format(targetEnd, 'dd/MM/yyyy')}`
+    };
+  }, [cutoffDay, cycleOffset]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,13 +85,21 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
   };
 
   const filteredRecords = useMemo(() => {
-    const start = startOfDay(parseISO(filterStartDate));
-    const end = endOfDay(parseISO(filterEndDate));
+    let start: Date;
+    let end: Date;
+
+    if (filterMode === 'cycle') {
+      start = activeCycle.start;
+      end = activeCycle.end;
+    } else {
+      start = startOfDay(parseISO(filterStartDate));
+      end = endOfDay(parseISO(filterEndDate));
+    }
     
     return records
       .filter(r => isWithinInterval(parseISO(r.date), { start, end }))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [records, filterStartDate, filterEndDate]);
+  }, [records, filterMode, activeCycle, filterStartDate, filterEndDate]);
 
   const summary = useMemo(() => {
     let totalShifts = 0;
@@ -86,11 +133,12 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
 
     csv += `\nTỔNG CỘNG:,${summary.totalShifts} ca,${summary.totalRegularHours}h,${summary.totalOvertime}h,${summary.totalBonus},${summary.totalPenalty},${summary.totalSalary}`;
 
+    const dateRangeLabel = filterMode === 'cycle' ? activeCycle.label.replace(/\//g, '-') : `${filterStartDate}-den-${filterEndDate}`;
     const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `cham-cong-${filterStartDate}-den-${filterEndDate}.csv`);
+    link.setAttribute('download', `cham-cong-${dateRangeLabel}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -186,35 +234,116 @@ export function TimesheetView({ records, onAddRecord, onRemoveRecord }: Timeshee
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-sm"
+          className="bg-white/80 backdrop-blur-xl rounded-3xl p-5 md:p-6 border border-white/60 shadow-xl"
         >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
-              <Calculator className="w-5 h-5 text-indigo-500" /> Tổng kết lương
-            </h3>
-            <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
-              <div className="flex flex-wrap items-center gap-2 bg-white/80 px-3 py-1.5 rounded-xl border border-slate-200/80 text-xs sm:text-sm w-full sm:w-auto">
-                <span className="text-slate-500 font-medium">Từ</span>
-                <input 
-                  type="date" 
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="bg-transparent focus:outline-none font-medium text-slate-700"
-                />
-                <span className="text-slate-500 font-medium border-l pl-2 border-slate-200">Đến</span>
-                <input 
-                  type="date" 
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="bg-transparent focus:outline-none font-medium text-slate-700"
-                />
+          {/* Header & Filter Toggle Bar */}
+          <div className="flex flex-col space-y-4 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-slate-800">
+                <Calculator className="w-5 h-5 text-indigo-500" /> Tổng kết lương
+              </h3>
+
+              <div className="flex items-center gap-2 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/80 w-full sm:w-auto">
+                <button
+                  onClick={() => setFilterMode('cycle')}
+                  className={clsx(
+                    "flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                    filterMode === 'cycle' ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30" : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <CalendarCheck className="w-3.5 h-3.5" /> Theo ngày lấy lương
+                </button>
+                <button
+                  onClick={() => setFilterMode('custom')}
+                  className={clsx(
+                    "flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                    filterMode === 'custom' ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30" : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Clock className="w-3.5 h-3.5" /> Khoảng ngày
+                </button>
               </div>
-              <button 
-                onClick={handleExport}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer w-full sm:w-auto"
-              >
-                <Download className="w-4 h-4 text-blue-500" /> Xuất CSV
-              </button>
+            </div>
+
+            {/* Sub-Filter Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100/80">
+              {filterMode === 'cycle' ? (
+                <div className="flex flex-wrap items-center justify-between sm:justify-start gap-3 w-full">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                    <span className="text-slate-500">Ngày chốt lương:</span>
+                    <select
+                      value={cutoffDay}
+                      onChange={(e) => setCutoffDay(Number(e.target.value))}
+                      className="bg-white border border-indigo-200 rounded-lg px-2 py-1 font-bold text-indigo-600 focus:outline-none cursor-pointer"
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                        <option key={day} value={day}>Ngày {day} hàng tháng</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      onClick={() => setCycleOffset(prev => prev - 1)}
+                      className="p-1.5 hover:bg-white rounded-lg border border-slate-200/60 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                      title="Kỳ trước"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setCycleOffset(0)}
+                      className={clsx(
+                        "px-3 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer",
+                        cycleOffset === 0 ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                      )}
+                    >
+                      Kỳ hiện tại
+                    </button>
+                    <button
+                      onClick={() => setCycleOffset(prev => prev + 1)}
+                      className="p-1.5 hover:bg-white rounded-lg border border-slate-200/60 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                      title="Kỳ sau"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="w-full text-xs text-indigo-700 font-semibold bg-white/70 px-3 py-1.5 rounded-xl border border-indigo-100 flex justify-between items-center mt-1">
+                    <span>📅 {activeCycle.label}</span>
+                    <button
+                      onClick={handleExport}
+                      className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Xuất CSV
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 w-full">
+                  <div className="flex flex-wrap items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 text-xs sm:text-sm w-full sm:w-auto">
+                    <span className="text-slate-500 font-medium">Từ</span>
+                    <input 
+                      type="date" 
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                      className="bg-transparent focus:outline-none font-medium text-slate-700"
+                    />
+                    <span className="text-slate-500 font-medium border-l pl-2 border-slate-200">Đến</span>
+                    <input 
+                      type="date" 
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                      className="bg-transparent focus:outline-none font-medium text-slate-700"
+                    />
+                  </div>
+                  <button 
+                    onClick={handleExport}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-700 shadow-sm transition-all cursor-pointer w-full sm:w-auto"
+                  >
+                    <Download className="w-4 h-4 text-blue-500" /> Xuất CSV
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
